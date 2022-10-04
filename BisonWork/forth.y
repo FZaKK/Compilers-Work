@@ -7,7 +7,7 @@ zzekun <2014074@mail.nankai.edu.cn>
 ***********************************/
 #include <iostream>
 #include <map>
-#include <string>
+#include <cstring>
 using namespace std;
 
 int yylex();
@@ -19,11 +19,11 @@ map<string, double>character_table;
 %}
 
 %union  {
-    double  dval;
-    char*  string;
+    double dval;
+    char strval[50];
 }
 
-%token <string> ID
+%token <strval> ID
 %token <dval> NUMBER
 %token ASSIGN
 %token ADD
@@ -33,10 +33,12 @@ map<string, double>character_table;
 %token LEFT_PRA
 %token RIGHT_PRA
 
+
+%right ASSIGN
 %left ADD SUB
 %left MUL DIV
 %right UMINUS
-%right ASSIGN
+
 
 %type <dval> expr
 
@@ -51,7 +53,7 @@ statement:      ID ASSIGN expr     { character_table[$1] = $3; }
 expr : expr ADD expr { $$ = $1 + $3; }
 	| expr SUB expr { $$ = $1 - $3; }
 	| expr MUL expr { $$ = $1 * $3; }
-	| expr DIV expr { if($3==0.0)
+	| expr DIV expr { if($3 == 0.0)
                         yyerror("divided by zero.");
                       else
                         $$ = $1 / $3;
@@ -93,9 +95,10 @@ int yylex()
                 i++;
             }
             idStr[i] = '\0';
-            yylval.string = idStr;
+            strcpy(yylval.strval, idStr);
+            cout<<yylval.strval<<endl;
             ungetc(t, stdin);
-            //printf("%f\n", character_table[yylval.string]);
+            //printf("%f\n", character_table[yylval.strval]);
             return ID;
         }
         else{

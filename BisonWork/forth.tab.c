@@ -77,7 +77,7 @@ zzekun <2014074@mail.nankai.edu.cn>
 ***********************************/
 #include <iostream>
 #include <map>
-#include <string>
+#include <cstring>
 using namespace std;
 
 int yylex();
@@ -519,8 +519,8 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    45,    45,    46,    47,    48,    51,    52,    53,    54,
-      59,    60,    61,    62
+       0,    47,    47,    48,    49,    50,    53,    54,    55,    56,
+      61,    62,    63,    64
 };
 #endif
 
@@ -1092,38 +1092,38 @@ yyreduce:
   switch (yyn)
     {
   case 4: /* statement: ID ASSIGN expr  */
-#line 47 "forth.y"
-                                   { character_table[(yyvsp[-2].string)] = (yyvsp[0].dval); }
+#line 49 "forth.y"
+                                   { character_table[(yyvsp[-2].strval)] = (yyvsp[0].dval); }
 #line 1098 "forth.tab.c"
     break;
 
   case 5: /* statement: expr  */
-#line 48 "forth.y"
+#line 50 "forth.y"
                                   { printf("%f\n",(yyvsp[0].dval)); }
 #line 1104 "forth.tab.c"
     break;
 
   case 6: /* expr: expr ADD expr  */
-#line 51 "forth.y"
+#line 53 "forth.y"
                      { (yyval.dval) = (yyvsp[-2].dval) + (yyvsp[0].dval); }
 #line 1110 "forth.tab.c"
     break;
 
   case 7: /* expr: expr SUB expr  */
-#line 52 "forth.y"
+#line 54 "forth.y"
                         { (yyval.dval) = (yyvsp[-2].dval) - (yyvsp[0].dval); }
 #line 1116 "forth.tab.c"
     break;
 
   case 8: /* expr: expr MUL expr  */
-#line 53 "forth.y"
+#line 55 "forth.y"
                         { (yyval.dval) = (yyvsp[-2].dval) * (yyvsp[0].dval); }
 #line 1122 "forth.tab.c"
     break;
 
   case 9: /* expr: expr DIV expr  */
-#line 54 "forth.y"
-                        { if((yyvsp[0].dval)==0.0)
+#line 56 "forth.y"
+                        { if((yyvsp[0].dval) == 0.0)
                         yyerror("divided by zero.");
                       else
                         (yyval.dval) = (yyvsp[-2].dval) / (yyvsp[0].dval);
@@ -1132,26 +1132,26 @@ yyreduce:
     break;
 
   case 10: /* expr: LEFT_PRA expr RIGHT_PRA  */
-#line 59 "forth.y"
+#line 61 "forth.y"
                                   { (yyval.dval) = (yyvsp[-1].dval); }
 #line 1138 "forth.tab.c"
     break;
 
   case 11: /* expr: SUB expr  */
-#line 60 "forth.y"
+#line 62 "forth.y"
                                 { (yyval.dval) = -(yyvsp[0].dval); }
 #line 1144 "forth.tab.c"
     break;
 
   case 12: /* expr: NUMBER  */
-#line 61 "forth.y"
+#line 63 "forth.y"
                  { (yyval.dval) = (yyvsp[0].dval); }
 #line 1150 "forth.tab.c"
     break;
 
   case 13: /* expr: ID  */
-#line 62 "forth.y"
-         { (yyval.dval) = character_table[(yyvsp[0].string)]; }
+#line 64 "forth.y"
+         { (yyval.dval) = character_table[(yyvsp[0].strval)]; }
 #line 1156 "forth.tab.c"
     break;
 
@@ -1349,7 +1349,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 65 "forth.y"
+#line 67 "forth.y"
 
 
 // programs section
@@ -1381,9 +1381,10 @@ int yylex()
                 i++;
             }
             idStr[i] = '\0';
-            yylval.string = idStr;
+            strcpy(yylval.strval, idStr);
+            cout<<yylval.strval<<endl;
             ungetc(t, stdin);
-            //printf("%f\n", character_table[yylval.string]);
+            //printf("%f\n", character_table[yylval.strval]);
             return ID;
         }
         else{

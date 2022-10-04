@@ -74,8 +74,8 @@ union YYSTYPE
 {
 #line 21 "forth.y"
 
-    double  dval;
-    char*  string;
+    double dval;
+    char strval[50];
 
 #line 81 "forth.tab.h"
 
