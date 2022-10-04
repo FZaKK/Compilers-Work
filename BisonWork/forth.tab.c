@@ -1099,7 +1099,7 @@ yyreduce:
 
   case 5: /* statement: expr  */
 #line 50 "forth.y"
-                                  { printf("%f\n",(yyvsp[0].dval)); }
+                                  { cout<<(yyvsp[0].dval)<<endl; }
 #line 1104 "forth.tab.c"
     break;
 

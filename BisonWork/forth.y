@@ -47,7 +47,7 @@ map<string, double>character_table;
 statement_list: statement ';'
         |       statement_list statement ';'
 statement:      ID ASSIGN expr     { character_table[$1] = $3; }
-        |       expr              { printf("%f\n",$1); }
+        |       expr              { cout<<$1<<endl; }
         ;
 
 expr : expr ADD expr { $$ = $1 + $3; }
