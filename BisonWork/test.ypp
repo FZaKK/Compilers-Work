@@ -58,19 +58,24 @@ struct Assemble{
 
 %%
 
-statement_list: statement ';'     { $$.code = $1.code; 
-									cout<<$$.code; }
-        |       statement_list statement ';'   { $$.code = $1.code + '\n' + $2.code; 
-												 cout<<$$.code; } 
-        ;                                      
-statement:      ID ASSIGN expr    { character_table[$1.addr] = "okk";
-                                    $$.code = $3.code + "\nMOV EAX, " + $3.addr + "\nMOV " + $1.addr + ", EAX"; }
-        |       expr              { $$.code = $1.code; }  
+statement_list: statement ';'     { $$.code = $1.code; }  //cout<<$$.code;
+        |       statement_list statement ';'   { $$.code = $1.code + $2.code; }  //cout<<$$.code;
+        ;                                                                             
+statement:      ID ASSIGN expr    { character_table[$1.addr] = "okk";   //若消除空行，这里也应进行判断
+                                    $$.code = $3.code + "\nMOV EAX, " + $3.addr + "\nMOV " + $1.addr + ", EAX"; 
+                                    cout<<$$.code; }
+        |       expr              { $$.code = $1.code; 
+                                    cout<<$$.code; }  
         ;
 
-expr : expr ADD expr { basic_addr = basic_addr + 1;
-                       $$.addr = "0x" + to_string(basic_addr); 
-                       $$.code = $1.code + '\n' + $3.code + "\nMOV EAX, " + $1.addr + "\nMOV EBX, " + $3.addr + "\nADD EAX, EBX\n" + "MOV " + $$.addr + ", EAX"; }
+expr : expr ADD expr { basic_addr = basic_addr + 1;  //这里也可以不用tempaddr
+                       $$.addr = "0x" + to_string(basic_addr);  //可以在这里设置条件判断消除空行的输出
+                       if($1.code!="" && $3.code!="")
+                            $$.code = $1.code + '\n' + $3.code + "\nMOV EAX, " + $1.addr + "\nMOV EBX, " + $3.addr + "\nADD EAX, EBX\n" + "MOV " + $$.addr + ", EAX"; 
+                       else if($1.code=="" && $3.code=="")
+                            $$.code = "\nMOV EAX, " + $1.addr + "\nMOV EBX, " + $3.addr + "\nADD EAX, EBX\n" + "MOV " + $$.addr + ", EAX"; 
+                       else
+                            $$.code = $1.code + $3.code + "\nMOV EAX, " + $1.addr + "\nMOV EBX, " + $3.addr + "\nADD EAX, EBX\n" + "MOV " + $$.addr + ", EAX"; }
 	| expr SUB expr { basic_addr = basic_addr + 1;
                       $$.addr = "0x" + to_string(basic_addr); 
                       $$.code = $1.code + '\n' + $3.code + "\nMOV EAX, " + $1.addr + "\nMOV EBX, " + $3.addr + "\nSUB EAX, EBX\n" + "MOV " + $$.addr + ", EAX"; }
@@ -85,9 +90,9 @@ expr : expr ADD expr { basic_addr = basic_addr + 1;
 	| SUB expr %prec UMINUS { basic_addr = basic_addr + 1;
                               $$.addr = "0x" + to_string(basic_addr);
                               $$.code = $2.code + "\nMOV EAX, " + $2.addr + "NEG EAX\n" + "MOV " + $$.addr + ", EAX"; }
-	| NUMBER { basic_addr = basic_addr + 1;
-               $$.addr = "0x" + to_string(basic_addr);
-               $$.code = "MOV EAX, " + to_string($1.dval) + '\n' + "MOV " + $$.addr + ", EAX"; }
+	| NUMBER { $$.addr = to_string($1.dval) + "D"; } //basic_addr = basic_addr + 1;
+                                                     //$$.addr = "0x" + to_string(basic_addr);
+                                                     //$$.code = "MOV EAX, " + to_string($1.dval) + '\n' + "MOV " + $$.addr + ", EAX";
     | ID  { $$.addr = $1.addr;
             if(character_table[$1.addr] == "")
                 $$.code = "MOV EAX, " + to_string(0) + '\n' + "MOV " + $1.addr + ", EAX"; 
@@ -127,7 +132,7 @@ int yylex()
             }
             idStr[i] = '\0';
             yylval.addr = idStr;
-            cout<<yylval.addr<<endl;
+            //cout<<yylval.addr<<endl;
             ungetc(t, stdin);
             //printf("%f\n", character_table[yylval.strval]);
             return ID;

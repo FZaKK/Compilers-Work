@@ -530,8 +530,8 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    61,    61,    63,    66,    68,    71,    74,    77,    80,
-      83,    85,    88,    91
+       0,    61,    61,    62,    64,    67,    71,    79,    82,    85,
+      88,    90,    93,    96
 };
 #endif
 
@@ -1104,98 +1104,101 @@ yyreduce:
     {
   case 2: /* statement_list: statement ';'  */
 #line 61 "test.ypp"
-                                  { yyval.code = yyvsp[-1].code; 
-									cout<<yyval.code; }
-#line 1110 "test.tab.cpp"
+                                  { yyval.code = yyvsp[-1].code; }
+#line 1109 "test.tab.cpp"
     break;
 
   case 3: /* statement_list: statement_list statement ';'  */
-#line 63 "test.ypp"
-                                               { yyval.code = yyvsp[-2].code + '\n' + yyvsp[-1].code; 
-												 cout<<yyval.code; }
-#line 1117 "test.tab.cpp"
+#line 62 "test.ypp"
+                                               { yyval.code = yyvsp[-2].code + yyvsp[-1].code; }
+#line 1115 "test.tab.cpp"
     break;
 
   case 4: /* statement: ID ASSIGN expr  */
-#line 66 "test.ypp"
+#line 64 "test.ypp"
                                   { character_table[yyvsp[-2].addr] = "okk";
-                                    yyval.code = yyvsp[0].code + "\nMOV EAX, " + yyvsp[0].addr + "\nMOV " + yyvsp[-2].addr + ", EAX"; }
-#line 1124 "test.tab.cpp"
+                                    yyval.code = yyvsp[0].code + "\nMOV EAX, " + yyvsp[0].addr + "\nMOV " + yyvsp[-2].addr + ", EAX"; 
+                                    cout<<yyval.code; }
+#line 1123 "test.tab.cpp"
     break;
 
   case 5: /* statement: expr  */
-#line 68 "test.ypp"
-                                  { yyval.code = yyvsp[0].code; }
+#line 67 "test.ypp"
+                                  { yyval.code = yyvsp[0].code; 
+                                    cout<<yyval.code; }
 #line 1130 "test.tab.cpp"
     break;
 
   case 6: /* expr: expr ADD expr  */
 #line 71 "test.ypp"
                      { basic_addr = basic_addr + 1;
-                       yyval.addr = "0x" + to_string(basic_addr); 
-                       yyval.code = yyvsp[-2].code + '\n' + yyvsp[0].code + "\nMOV EAX, " + yyvsp[-2].addr + "\nMOV EBX, " + yyvsp[0].addr + "\nADD EAX, EBX\n" + "MOV " + yyval.addr + ", EAX"; }
-#line 1138 "test.tab.cpp"
+                       yyval.addr = "0x" + to_string(basic_addr);  //可以在这里设置条件判断消除空行的输出
+                       if(yyvsp[-2].code!="" && yyvsp[0].code!="")
+                            yyval.code = yyvsp[-2].code + '\n' + yyvsp[0].code + "\nMOV EAX, " + yyvsp[-2].addr + "\nMOV EBX, " + yyvsp[0].addr + "\nADD EAX, EBX\n" + "MOV " + yyval.addr + ", EAX"; 
+                       else if(yyvsp[-2].code=="" && yyvsp[0].code=="")
+                            yyval.code = "\nMOV EAX, " + yyvsp[-2].addr + "\nMOV EBX, " + yyvsp[0].addr + "\nADD EAX, EBX\n" + "MOV " + yyval.addr + ", EAX"; 
+                       else
+                            yyval.code = yyvsp[-2].code + yyvsp[0].code + "\nMOV EAX, " + yyvsp[-2].addr + "\nMOV EBX, " + yyvsp[0].addr + "\nADD EAX, EBX\n" + "MOV " + yyval.addr + ", EAX"; }
+#line 1143 "test.tab.cpp"
     break;
 
   case 7: /* expr: expr SUB expr  */
-#line 74 "test.ypp"
+#line 79 "test.ypp"
                         { basic_addr = basic_addr + 1;
                       yyval.addr = "0x" + to_string(basic_addr); 
                       yyval.code = yyvsp[-2].code + '\n' + yyvsp[0].code + "\nMOV EAX, " + yyvsp[-2].addr + "\nMOV EBX, " + yyvsp[0].addr + "\nSUB EAX, EBX\n" + "MOV " + yyval.addr + ", EAX"; }
-#line 1146 "test.tab.cpp"
+#line 1151 "test.tab.cpp"
     break;
 
   case 8: /* expr: expr MUL expr  */
-#line 77 "test.ypp"
+#line 82 "test.ypp"
                         { basic_addr = basic_addr + 1;
                       yyval.addr = "0x" + to_string(basic_addr); 
                       yyval.code = yyvsp[-2].code + '\n' + yyvsp[0].code + "\nMOV EAX, " + yyvsp[-2].addr + "\nMOV EBX, " + yyvsp[0].addr + "\nMUL EAX, EBX\n" + "MOV " + yyval.addr + ", EAX"; }
-#line 1154 "test.tab.cpp"
+#line 1159 "test.tab.cpp"
     break;
 
   case 9: /* expr: expr DIV expr  */
-#line 80 "test.ypp"
+#line 85 "test.ypp"
                         { basic_addr = basic_addr + 1;
                       yyval.addr = "0x" + to_string(basic_addr); 
                       yyval.code = yyvsp[-2].code + '\n' + yyvsp[0].code + "\nMOV EAX, " + yyvsp[-2].addr + "\nMOV EBX, " + yyvsp[0].addr + "\nDIV EAX, EBX\n" + "MOV " + yyval.addr + ", EAX"; }
-#line 1162 "test.tab.cpp"
+#line 1167 "test.tab.cpp"
     break;
 
   case 10: /* expr: LEFT_PRA expr RIGHT_PRA  */
-#line 83 "test.ypp"
+#line 88 "test.ypp"
                                   { yyval.addr = yyvsp[-1].addr; 
                                 yyval.code = yyvsp[-1].code; }
-#line 1169 "test.tab.cpp"
+#line 1174 "test.tab.cpp"
     break;
 
   case 11: /* expr: SUB expr  */
-#line 85 "test.ypp"
+#line 90 "test.ypp"
                                 { basic_addr = basic_addr + 1;
                               yyval.addr = "0x" + to_string(basic_addr);
                               yyval.code = yyvsp[0].code + "\nMOV EAX, " + yyvsp[0].addr + "NEG EAX\n" + "MOV " + yyval.addr + ", EAX"; }
-#line 1177 "test.tab.cpp"
+#line 1182 "test.tab.cpp"
     break;
 
   case 12: /* expr: NUMBER  */
-#line 88 "test.ypp"
-                 { basic_addr = basic_addr + 1;
-               yyval.addr = "0x" + to_string(basic_addr);
-               yyval.code = "MOV EAX, " + to_string(yyvsp[0].dval) + '\n' + "MOV " + yyval.addr + ", EAX"; }
-#line 1185 "test.tab.cpp"
+#line 93 "test.ypp"
+                 { yyval.addr = to_string(yyvsp[0].dval) + "D"; }
+#line 1188 "test.tab.cpp"
     break;
 
   case 13: /* expr: ID  */
-#line 91 "test.ypp"
+#line 96 "test.ypp"
           { yyval.addr = yyvsp[0].addr;
             if(character_table[yyvsp[0].addr] == "")
                 yyval.code = "MOV EAX, " + to_string(0) + '\n' + "MOV " + yyvsp[0].addr + ", EAX"; 
             else
                 ; }
-#line 1195 "test.tab.cpp"
+#line 1198 "test.tab.cpp"
     break;
 
 
-#line 1199 "test.tab.cpp"
+#line 1202 "test.tab.cpp"
 
       default: break;
     }
@@ -1388,7 +1391,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 98 "test.ypp"
+#line 103 "test.ypp"
 
 
 // programs section
@@ -1421,7 +1424,7 @@ int yylex()
             }
             idStr[i] = '\0';
             yylval.addr = idStr;
-            cout<<yylval.addr<<endl;
+            //cout<<yylval.addr<<endl;
             ungetc(t, stdin);
             //printf("%f\n", character_table[yylval.strval]);
             return ID;
