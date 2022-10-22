@@ -1382,7 +1382,7 @@ int yylex()
             }
             idStr[i] = '\0';
             strcpy(yylval.strval, idStr);
-            cout<<yylval.strval<<endl;
+            //cout<<yylval.strval<<endl;
             ungetc(t, stdin);
             //printf("%f\n", character_table[yylval.strval]);
             return ID;
