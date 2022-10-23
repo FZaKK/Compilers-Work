@@ -6,6 +6,8 @@
     #include <ostream>
     #include <fstream>
     #include <iostream>
+    #include <sstream>
+    #include <stack>
     #include <map>
     using namespace std;
     extern FILE *yyin; 
@@ -30,6 +32,44 @@
         string DEBUG_INFO = "\t" + s + "\t" + to_string(yylineno) + "\t" + to_string(columnno) + "\t" + to_string(num) + "\n";
         fputs(DEBUG_INFO.c_str(), yyout);
     }
+
+    void DEBUG_FOR_ID_LAB4(string s, string ID_scope){
+        string DEBUG_INFO = "\t" + s + "\t" + to_string(yylineno) + "\t" + to_string(columnno) + "\t" + ID_scope + "\n";
+        fputs(DEBUG_INFO.c_str(), yyout);
+    }
+
+    // 符号表就先在lex中定义，以后在.h头文件中定义
+    class SymbolTable{
+    public:
+        string symbol_name;
+        string type;
+        string* scope;
+        int reserved;
+    public:
+        SymbolTable();
+        SymbolTable(string n, string t, string* s, int default_reserved = 0);
+        void lookup();
+        void insert();
+    }test_symbol[100];
+
+    SymbolTable::SymbolTable(){
+        symbol_name = "";
+        type = "";
+        scope = nullptr;
+        reserved = 0;
+    }
+
+    SymbolTable::SymbolTable(string n, string t, string* s, int cur_reserved){
+        symbol_name = n;
+        type = t;
+        scope = s;
+        reserved = cur_reserved;
+    }
+
+    // 使用队列来追踪作用域，用栈top元素的地址来标识
+    stack<string*> scope_stack;
+    // string latest_token = "";
+    int symbol_num = 0;
     
     #else
     #define YYSTYPE void *
@@ -58,6 +98,14 @@ BLOCKCOMMENT_END "*/"
 
 %%
 
+"const" {
+    #ifdef ONLY_FOR_LEX
+        DEBUG_FOR_LAB4("CONST\t const");
+        columnno += 5;
+    #else
+        return CONST;
+    #endif
+}
 "int" {
     #ifdef ONLY_FOR_LEX
         DEBUG_FOR_LAB4("INT\t int");
@@ -302,6 +350,9 @@ BLOCKCOMMENT_END "*/"
     #ifdef ONLY_FOR_LEX
         DEBUG_FOR_LAB4("LBRACE\t{");
         columnno += 1;
+        string* sign = new string;
+        *sign = "local";
+        scope_stack.push(sign);
     #else
         return LBRACE;
     #endif
@@ -310,9 +361,18 @@ BLOCKCOMMENT_END "*/"
     #ifdef ONLY_FOR_LEX
         DEBUG_FOR_LAB4("RBRACE\t}");
         columnno += 1;
+        scope_stack.pop();
     #else
         return RBRACE;
     #endif
+}
+"," {
+    #ifdef ONLY_FOR_LEX
+        DEBUG_FOR_LAB4("COMMA\t,");
+        columnno += 1;
+    #else
+        return COMMA;
+    #endif    
 }
 
 {LINECOMMENT} {;}
@@ -329,7 +389,7 @@ BLOCKCOMMENT_END "*/"
                 // cout << int_table[temp] << " " << typeid(int_table[temp]).name() << endl; // 确定输出为int类型
                 columnno += strlen(yytext);
             #else
-                return DECIMIAL;
+                return INTEGER;
             #endif
             }
 {FLOATDECIMAL} {
@@ -339,7 +399,7 @@ BLOCKCOMMENT_END "*/"
                 DEBUG_FOR_FLOAT_LAB4("FLOATDECIMAL\t" + temp, float_table[temp]);
                 columnno += strlen(yytext);
             #else
-                return FLOATDECIMAL;
+                return FLOATNUM;
             #endif
             }
 {OCTAL} {
@@ -349,7 +409,7 @@ BLOCKCOMMENT_END "*/"
                 DEBUG_FOR_INT_LAB4("OCTAL\t" + temp, int_table[temp]);
                 columnno += strlen(yytext);
             #else
-                return OCTAL;
+                return INTEGER;
             #endif
     }
 {HEXDECIMIAL} {
@@ -359,11 +419,35 @@ BLOCKCOMMENT_END "*/"
                 DEBUG_FOR_INT_LAB4("HEXDECIMIAL\t" + temp, int_table[temp]);
                 columnno += strlen(yytext);
             #else
-                return HEXDECIMIAL;
+                return INTEGER;
             #endif
     }
-{ID} {columnno += strlen(yytext);}
+{ID} {
+    #ifdef ONLY_FOR_LEX
+        string name = yytext;
+        string ID_type; // 词法分析不处理这个
+        for(int i = 0; i < 2; i++){
+            if(test_symbol[i].symbol_name == yytext){
+                ID_type = test_symbol[i].type;
+            }
+            else{
+                ID_type = "";
+            }
+        }
+        test_symbol[symbol_num] = SymbolTable(name, ID_type, scope_stack.top());
+        string* back = scope_stack.top();
+        char temp[100];
+        sprintf(temp, "%#lx", long(back));
+        string hex_scope = temp;
+        DEBUG_FOR_ID_LAB4("ID\t" + test_symbol[symbol_num].symbol_name, hex_scope);
+        symbol_num++;
+        columnno += strlen(yytext);
+    #else
+        return ID;
+    #endif
+    }
 {EOL} { 
+      columnno += strlen(yytext);
       yylineno++; 
       columnno = 0; 
     }
@@ -392,9 +476,17 @@ int main(int argc, char **argv){
     string Frame_Info = tab + "1:token" + " " + "2:lexme" + " " + "3:lineno" + " " + "4:columnno" + " " + "5:attribute" + "\n" + "\n" + "\n";
     fputs(Frame_Info.c_str(), yyout);
 
+    // yylex分析之前先初始化一下保留字，作用域初始化为global
+    test_symbol[0] = SymbolTable("getint", "PLT", nullptr, 1);
+    test_symbol[1] = SymbolTable("putint", "PLT", nullptr, 1);
+    symbol_num += 2;
+    string start = "global";
+    scope_stack.push(&start);
+
+
     yylex();
 
-    /*
+    
     for(auto it : int_table){
 	    cout << it.first <<" "<< it.second <<endl;
     }
@@ -402,8 +494,11 @@ int main(int argc, char **argv){
     for(auto it : float_table){
 	    cout << it.first <<" "<< it.second <<endl;
     }
-    */
+    for(int i = 0; i < symbol_num; i++){
+        cout << test_symbol[i].symbol_name << " " << test_symbol[i].reserved << endl;
+    }
 
     return 0;
 }
 #endif
+
