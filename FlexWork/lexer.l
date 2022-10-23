@@ -66,7 +66,7 @@
         reserved = cur_reserved;
     }
 
-    // 使用队列来追踪作用域，用栈top元素的地址来标识
+    // 使用stack来追踪作用域，用栈top元素的地址来标识
     stack<string*> scope_stack;
     // string latest_token = "";
     int symbol_num = 0;
