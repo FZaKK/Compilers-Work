@@ -19,13 +19,6 @@ ConstantSymbolEntry::ConstantSymbolEntry(Type *type, float fvalue) : SymbolEntry
     this->fvalue = fvalue;
 }
 
-int ConstantSymbolEntry::getValue() const {
-    if(type->isInt())
-        return ivalue;
-    else
-        return fvalue;
-}
-
 // 这里需要判断一下再输出
 std::string ConstantSymbolEntry::toStr(){
     if(type->isInt())
@@ -45,6 +38,15 @@ std::string ConstantSymbolEntry::toStr(){
 IdentifierSymbolEntry::IdentifierSymbolEntry(Type *type, std::string name, int scope) : SymbolEntry(type, SymbolEntry::VARIABLE), name(name)
 {
     this->scope = scope;
+}
+
+// 这里主要实现对于符号表中的数值对应关系
+void IdentifierSymbolEntry::setiValue(int ivalue){
+    this->ivalue = ivalue;
+}
+
+void IdentifierSymbolEntry::setfValue(float fvalue){
+    this->fvalue = fvalue;
 }
 
 std::string IdentifierSymbolEntry::toStr()

@@ -42,8 +42,8 @@
 %token MOD MUL DIV ADD SUB OR AND NON GREATER LESS GORE LORE ASSIGN
 %token WHILE RETURN BREAK CONTINUE
 
-%nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt ReturnStmt DeclStmt FuncDef VarDefList VarDef VarDeclStmt // ConstDecl
-%nterm <exprtype> Exp AddExp Cond LOrExp PrimaryExp LVal RelExp EqExp UnaryExp LAndExp MulExp //InitVal //各种形参域，数组
+%nterm <stmttype> ConstDef ConstDefList ConstDeclStmt Stmts Stmt AssignStmt BlockStmt IfStmt ReturnStmt DeclStmt FuncDef VarDefList VarDef VarDeclStmt
+%nterm <exprtype> ConstInitVal ConstExp Exp AddExp Cond LOrExp PrimaryExp LVal RelExp EqExp UnaryExp LAndExp MulExp //InitVal //各种形参域，数组
 %nterm <type> Type
 
 %precedence THEN
@@ -282,18 +282,20 @@ InitVal
 */
 DeclStmt
     : 
-    VarDeclStmt { $$ = $1; }
+    VarDeclStmt {$$ = $1;}
+    |
+    ConstDeclStmt {$$ = $1;}
     ;
 VarDeclStmt
     : 
-    Type VarDefList SEMICOLON { $$ = $2; }
+    Type VarDefList SEMICOLON {$$ = $2;}
     ;
 VarDefList
     : VarDefList COMMA VarDef {
         $$ = $1;
         $1->setNext($3);
     } 
-    | VarDef { $$ = $1; }
+    | VarDef {$$ = $1;}
     ;
 VarDef
     : ID {
@@ -303,6 +305,56 @@ VarDef
         $$ = new DeclStmt(new Id(se));
         delete []$1;
     }
+    ;
+// 新添加的常量定义
+// initvalue部分需要补充正常的表达式和数组初值
+ConstDeclStmt
+    :
+    CONST Type ConstDefList SEMICOLON {$$ = $3;}
+    ;
+ConstDefList
+    :
+    ConstDefList COMMA ConstDef {
+        $$ = $1;
+        $1->setNext($3);
+    }
+    |
+    ConstDef {$$ = $1;}
+    ;
+ConstDef
+    :
+    ID ASSIGN ConstInitVal{
+        if(declType->isFloat()){
+            declType = TypeSystem::constFloatType;
+        }
+        if(declType->isInt()){
+            declType = TypeSystem::constIntType;
+        }
+        SymbolEntry* se;
+        se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
+        ((IdentifierSymbolEntry*)se)->setConst();
+        identifiers->install($1, se);
+        
+        // 进行类型的判断选择赋值，符号表之中并没有存储任何的数值，包括const和var都得补充
+        /*
+        if(declType->isFloat()){
+            ((IdentifierSymbolEntry*)se)->setfValue($3); 
+        }
+        if(declType->isInt()){
+            ((IdentifierSymbolEntry*)se)->setiValue($3); 
+        }
+        */
+        $$ = new DeclStmt(new Id(se));
+        delete []$1;
+    }
+    ;
+ConstInitVal 
+    :
+    ConstExp {$$ = $1;}
+    ;
+ConstExp
+    :
+    AddExp {$$ = $1;}
     ;
 FuncDef
     :

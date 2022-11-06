@@ -42,9 +42,9 @@ public:
     ConstantSymbolEntry(Type *type, int ivalue);
     ConstantSymbolEntry(Type *type, float fvalue);
     virtual ~ConstantSymbolEntry() {};
-    int getValue() const;
+    int getiValue() const{return ivalue;};
+    float getfValue() const{return fvalue;};
     std::string toStr();
-    // You can add any function you need here.
 };
 
 
@@ -76,14 +76,20 @@ private:
     enum {GLOBAL, PARAM, LOCAL};
     std::string name;
     int scope;
-    // You can add any field you need here.
-
+    bool constant; // 判断是否为常量的标志位
+    int ivalue; // 如果ID的定义为int则在此变量中存储
+    float fvalue;
 public:
     IdentifierSymbolEntry(Type *type, std::string name, int scope);
     virtual ~IdentifierSymbolEntry() {};
     std::string toStr();
+    void setiValue(int ivalue);
+    void setfValue(float fvalue);
+    int getiValue() const{return ivalue;};
+    float getfValue() const{return fvalue;};
     int getScope() const {return scope;};
-    // You can add any function you need here.
+    void setConst() { constant = true;};
+    bool getConst() const { return constant; };
 };
 
 

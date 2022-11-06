@@ -23,8 +23,10 @@ class IntType : public Type
 {
 private:
     int size;
+    bool type_constant;
 public:
-    IntType(int size) : Type(Type::INT), size(size){};
+    IntType(int size, bool type_constant = false) : Type(Type::INT), size(size), type_constant(type_constant){};
+    bool is_type_Const() const { return type_constant; };
     std::string toStr();
 };
 
@@ -33,8 +35,10 @@ class FloatType : public Type
 {
 private:
     int size;
+    bool type_constant;
 public:
-    FloatType(int size) : Type(Type::FLOAT), size(size){};
+    FloatType(int size, bool type_constant = false) : Type(Type::FLOAT), size(size), type_constant(type_constant){};
+    bool is_type_Const() const { return type_constant; };
     std::string toStr();
 };
 
@@ -62,10 +66,14 @@ private:
     static IntType commonInt;
     static FloatType commonFloat;
     static VoidType commonVoid;
+    static IntType commonConstInt;
+    static FloatType commonConstFloat;
 public:
     static Type *intType;
     static Type *floatType;
     static Type *voidType;
+    static Type *constIntType;
+    static Type *constFloatType;
 };
 
 #endif
