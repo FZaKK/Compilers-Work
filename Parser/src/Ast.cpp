@@ -13,6 +13,7 @@ Node::Node()
     next = nullptr;
 }
 
+// 从二叉树在int a,b,c这种相同位置的定义转换为多叉树
 void Node::setNext(Node* node) {
     Node* n = this;
     while (n->getNext()) {
@@ -51,6 +52,16 @@ void UnaryExpr :: output(int level)
     }
     fprintf(yyout, "%*cUnaryExpr\top: %s\n", level, ' ', op_str.c_str());
     expr->output(level + 4);
+}
+
+void CallExpr::output(int level){
+    std::string name, type;
+    int scope;
+    name = symbolEntry->toStr();
+    type = symbolEntry->getType()->toStr();
+    scope = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getScope();
+    fprintf(yyout, "%*cCallExprFunc name: %s, type: %s, scope: %d\n", level, ' ', 
+            name.c_str(), type.c_str(), scope);
 }
 
 void BinaryExpr::output(int level)
@@ -140,10 +151,24 @@ void SeqNode::output(int level)
     stmt2->output(level + 4);
 }
 
+void ExprStmt::output(int level){
+    fprintf(yyout, "%*cExprStmt\n", level, ' ');
+    expr->output(level + 4);
+}
+void BlankStmt::output(int level) {
+    fprintf(yyout, "%*cBlankStmt\n", level, ' ');
+}
+
+DeclStmt::DeclStmt(Id* id, ExprNode* expr) : id(id) {
+    this->expr = expr;
+}
 void DeclStmt::output(int level)
 {
     fprintf(yyout, "%*cDeclStmt\n", level, ' ');
     id->output(level + 4);
+    if(expr != nullptr){
+        expr->output(level + 4);
+    }
     // int temp = level + 4;
     if (this->getNext()){
         this->getNext()->output(level);
@@ -165,10 +190,27 @@ void IfElseStmt::output(int level)
     elseStmt->output(level + 4);
 }
 
+void WhileStmt::output(int level)
+{
+    fprintf(yyout, "%*cWhileStmt\n", level, ' ');
+    cond->output(level + 4);
+    stmt->output(level + 4);
+}
+void BreakStmt::output(int level)
+{
+    fprintf(yyout, "%*cBreakStmt\n", level, ' ');
+}
+
+void ContinueStmt::output(int level)
+{
+    fprintf(yyout, "%*cContinueStmt\n", level, ' ');
+}
+
 void ReturnStmt::output(int level)
 {
     fprintf(yyout, "%*cReturnStmt\n", level, ' ');
-    retValue->output(level + 4);
+    if (returnValue != nullptr)
+        returnValue->output(level + 4);
 }
 
 void AssignStmt::output(int level)

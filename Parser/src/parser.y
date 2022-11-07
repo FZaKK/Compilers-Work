@@ -42,8 +42,8 @@
 %token MOD MUL DIV ADD SUB OR AND NON GREATER LESS GORE LORE ASSIGN
 %token WHILE RETURN BREAK CONTINUE
 
-%nterm <stmttype> ConstDef ConstDefList ConstDeclStmt Stmts Stmt AssignStmt BlockStmt IfStmt ReturnStmt DeclStmt FuncDef VarDefList VarDef VarDeclStmt
-%nterm <exprtype> ConstInitVal ConstExp Exp AddExp Cond LOrExp PrimaryExp LVal RelExp EqExp UnaryExp LAndExp MulExp //InitVal //各种形参域，数组
+%nterm <stmttype> ExprStmt BlankStmt ConstDef ConstDefList ConstDeclStmt Stmts Stmt AssignStmt BlockStmt IfStmt WhileStmt BreakStmt ContinueStmt ReturnStmt DeclStmt FuncDef VarDefList VarDef VarDeclStmt
+%nterm <exprtype> ConstInitVal ConstExp Exp AddExp Cond LOrExp PrimaryExp LVal RelExp EqExp UnaryExp LAndExp MulExp InitVal //各种形参域，数组
 %nterm <type> Type
 
 %precedence THEN
@@ -62,11 +62,15 @@ Stmts
     ;
 Stmt
     : AssignStmt {$$=$1;}
+    | ExprStmt {$$ = $1;}
     | BlockStmt {$$=$1;}
     | IfStmt {$$=$1;}
+    | BreakStmt {$$=$1;}
+    | ContinueStmt {$$=$1;}
     | ReturnStmt {$$=$1;}
     | DeclStmt {$$ = $1;}
     | FuncDef {$$=$1;}
+    | BlankStmt {$$=$1;}
     ;
 LVal
     : ID {
@@ -82,10 +86,23 @@ LVal
         delete []$1;
     }
     ;
+// 针对函数调用的使用, 补上一个Expr Node即可
+ExprStmt
+    :
+    Exp SEMICOLON{
+        $$ = new ExprStmt($1);
+    }
 AssignStmt
     :
     LVal ASSIGN Exp SEMICOLON {
         $$ = new AssignStmt($1, $3);
+    }
+    ;
+// 针对于;号这种空语句
+BlankStmt
+    : 
+    SEMICOLON {
+        $$ = new BlankStmt();
     }
     ;
 BlockStmt
@@ -107,9 +124,26 @@ IfStmt
         $$ = new IfElseStmt($3, $5, $7);
     }
     ;
+WhileStmt
+    : WHILE LPAREN Cond RPAREN Stmt {
+        $$ = new WhileStmt($3, $5);
+    }
+    ;
+BreakStmt
+    : BREAK SEMICOLON {
+        $$ = new BreakStmt();
+    }
+    ;
+ContinueStmt
+    : CONTINUE SEMICOLON {
+        $$ = new ContinueStmt();
+    }
+    ;
 ReturnStmt
-    :
-    RETURN Exp SEMICOLON{
+    : RETURN SEMICOLON {
+        $$ = new ReturnStmt();
+    }
+    | RETURN Exp SEMICOLON{
         $$ = new ReturnStmt($2);
     }
     ;
@@ -155,6 +189,15 @@ UnaryExp
         SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
         $$ = new UnaryExpr(se, UnaryExpr::NON, $2);
     }
+    | ID LPAREN RPAREN {
+        SymbolEntry *se;
+        se = identifiers->lookup($1);
+        if (se == nullptr)
+            fprintf(stderr, "function \"%s\" is undefined\n", (char*)$1);
+        else{
+            $$ = new CallExpr(se);
+        }
+    } 
     ;
 MulExp
     :
@@ -274,12 +317,6 @@ Type
         declType = TypeSystem::floatType;
     }
     ;
-/*
-InitVal
-    :
-    Exp {$$ = $1;}
-    ;
-*/
 DeclStmt
     : 
     VarDeclStmt {$$ = $1;}
@@ -305,6 +342,27 @@ VarDef
         $$ = new DeclStmt(new Id(se));
         delete []$1;
     }
+    | ID ASSIGN InitVal {
+        SymbolEntry* se;
+        se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
+        identifiers->install($1, se);
+        
+        /* 这里展示的也是对expr node的属性的计算，这些node的值可以是float类型的，因为最后会进行int和float的判断
+        if(declType->isFloat()){
+            ((IdentifierSymbolEntry*)se)->setfValue($3->getvalue()); 
+        }
+        if(declType->isInt()){
+            ((IdentifierSymbolEntry*)se)->setiValue($3->getvalue()); 
+        }
+        */
+
+        $$ = new DeclStmt(new Id(se), $3);
+        delete []$1;
+    }
+    ;
+InitVal
+    :
+    Exp {$$ = $1;}
     ;
 // 新添加的常量定义
 // initvalue部分需要补充正常的表达式和数组初值
@@ -336,15 +394,16 @@ ConstDef
         identifiers->install($1, se);
         
         // 进行类型的判断选择赋值，符号表之中并没有存储任何的数值，包括const和var都得补充
-        /*
+        /* 这里需要注意的是需要补充对expr node的属性的值的计算
         if(declType->isFloat()){
-            ((IdentifierSymbolEntry*)se)->setfValue($3); 
+            ((IdentifierSymbolEntry*)se)->setfValue($3->getvalue()); 
         }
         if(declType->isInt()){
-            ((IdentifierSymbolEntry*)se)->setiValue($3); 
+            ((IdentifierSymbolEntry*)se)->setiValue($3->getvalue()); 
         }
         */
-        $$ = new DeclStmt(new Id(se));
+        
+        $$ = new DeclStmt(new Id(se), $3);
         delete []$1;
     }
     ;

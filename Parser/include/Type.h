@@ -54,9 +54,10 @@ class FunctionType : public Type
 private:
     Type *returnType;
     std::vector<Type*> paramsType;
+    // std::vector<SymbolEntry*> paramsSe;
 public:
     FunctionType(Type* returnType, std::vector<Type*> paramsType) : 
-    Type(Type::FUNC), returnType(returnType), paramsType(paramsType){};
+    Type(Type::FUNC), returnType(returnType), paramsType(paramsType){}//this->paramsSe = paramsSe;};
     std::string toStr();
 };
 
