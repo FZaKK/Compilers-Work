@@ -62,6 +62,19 @@ void CallExpr::output(int level){
     scope = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getScope();
     fprintf(yyout, "%*cCallExprFunc name: %s, type: %s, scope: %d\n", level, ' ', 
             name.c_str(), type.c_str(), scope);
+    ExprNode *temp = param;
+    while(temp != nullptr){
+        temp->output(level + 4);
+        temp =  dynamic_cast<ExprNode*>(temp->getNext());
+    }
+    /*
+    if(param != nullptr){
+        param->output(level + 4);
+        while(param->getNext()){
+            param->getNext()->output(level + 4);
+        }
+    }
+    */
 }
 
 void BinaryExpr::output(int level)
@@ -141,7 +154,9 @@ void Id::output(int level)
 void CompoundStmt::output(int level)
 {
     fprintf(yyout, "%*cCompoundStmt\n", level, ' ');
-    stmt->output(level + 4);
+    if(stmt != nullptr){
+        stmt->output(level + 4);
+    }
 }
 
 void SeqNode::output(int level)
@@ -159,9 +174,8 @@ void BlankStmt::output(int level) {
     fprintf(yyout, "%*cBlankStmt\n", level, ' ');
 }
 
-DeclStmt::DeclStmt(Id* id, ExprNode* expr) : id(id) {
-    this->expr = expr;
-}
+DeclStmt::DeclStmt(Id *id, ExprNode* expr) : id(id){ this->expr = expr;};
+
 void DeclStmt::output(int level)
 {
     fprintf(yyout, "%*cDeclStmt\n", level, ' ');
@@ -169,7 +183,6 @@ void DeclStmt::output(int level)
     if(expr != nullptr){
         expr->output(level + 4);
     }
-    // int temp = level + 4;
     if (this->getNext()){
         this->getNext()->output(level);
     }
@@ -227,5 +240,8 @@ void FunctionDef::output(int level)
     type = se->getType()->toStr();
     fprintf(yyout, "%*cFunctionDefine function name: %s, type: %s\n", level, ' ', 
             name.c_str(), type.c_str());
+    if(decl){
+        decl->output(level + 4);
+    }
     stmt->output(level + 4);
 }

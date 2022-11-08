@@ -27,6 +27,7 @@ protected:
     SymbolEntry *symbolEntry;
 public:
     ExprNode(SymbolEntry *symbolEntry) : symbolEntry(symbolEntry){};
+    SymbolEntry* getSymbolEntry(){ return symbolEntry; };
     // virtual float getValue() { return -1; };
 };
 
@@ -78,7 +79,7 @@ class CompoundStmt : public StmtNode
 private:
     StmtNode *stmt;
 public:
-    CompoundStmt(StmtNode *stmt) : stmt(stmt) {};
+    CompoundStmt(StmtNode* stmt = nullptr){this->stmt = stmt;};
     void output(int level);
 };
 
@@ -113,6 +114,7 @@ private:
 public:
     DeclStmt(Id *id, ExprNode* expr = nullptr);
     void output(int level);
+    Id* getId(){ return id; }
 };
 
 class IfStmt : public StmtNode
@@ -207,9 +209,10 @@ class FunctionDef : public StmtNode
 {
 private:
     SymbolEntry *se;
+    DeclStmt *decl;
     StmtNode *stmt;
 public:
-    FunctionDef(SymbolEntry *se, StmtNode *stmt) : se(se), stmt(stmt){};
+    FunctionDef(SymbolEntry *se, DeclStmt *decl, StmtNode *stmt) : se(se), decl(decl), stmt(stmt){};
     void output(int level);
 };
 
@@ -217,7 +220,7 @@ class CallExpr : public ExprNode {
 private:
     ExprNode *param; // 目前还没设计好相关的形参表等内容
 public:
-    CallExpr(SymbolEntry* se, ExprNode* param = nullptr) : ExprNode(se){};
+    CallExpr(SymbolEntry* se, ExprNode* param = nullptr) : ExprNode(se){this->param = param;};
     void output(int level);
 };
 

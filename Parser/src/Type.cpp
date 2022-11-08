@@ -2,7 +2,7 @@
 #include <sstream>
 
 IntType TypeSystem::commonInt = IntType(4);
-FloatType TypeSystem::commonFloat = FloatType(4); // 应该是字节大小吧
+FloatType TypeSystem::commonFloat = FloatType(4);  // 应该是字节大小吧
 VoidType TypeSystem::commonVoid = VoidType();
 IntType TypeSystem::commonConstInt = IntType(4, true);
 FloatType TypeSystem::commonConstFloat = FloatType(4, true);

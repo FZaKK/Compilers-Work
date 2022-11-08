@@ -216,9 +216,9 @@ BLOCKCOMMENT_END "*/"
     lexeme = new char[strlen(yytext) + 1];
     strcpy(lexeme, yytext);
     yylval.strtype = lexeme;
-    std::vector<Type*> vec;
+    std::vector<SymbolEntry*> vec;
     // std::vector<SymbolEntry*> vec1;
-    vec.push_back(TypeSystem::intType);
+    // vec.push_back(TypeSystem::intType);
     Type *funcType;
     funcType = new FunctionType(TypeSystem::voidType, vec);
     SymbolTable* st = identifiers;
@@ -236,8 +236,26 @@ BLOCKCOMMENT_END "*/"
     lexeme = new char[strlen(yytext) + 1];
     strcpy(lexeme, yytext);
     yylval.strtype = lexeme;
-    std::vector<Type*> vec;
+    std::vector<SymbolEntry*> vec;
     Type* funcType = new FunctionType(TypeSystem::intType, vec);
+    SymbolTable* st = identifiers;
+    while(st->getPrev())
+        st = st->getPrev();
+    SymbolEntry* se = new IdentifierSymbolEntry(funcType, yytext, st->getLevel());
+    st->install(yytext, se);
+    return ID;
+}
+"putch" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4(yytext);
+    char *lexeme;
+    lexeme = new char[strlen(yytext) + 1];
+    strcpy(lexeme, yytext);
+    yylval.strtype = lexeme;
+    // std::vector<Type*> vec;
+    std::vector<SymbolEntry*> vec;
+    // vec.push_back(TypeSystem::intType);
+    Type* funcType = new FunctionType(TypeSystem::voidType, vec);
     SymbolTable* st = identifiers;
     while(st->getPrev())
         st = st->getPrev();
@@ -255,8 +273,9 @@ BLOCKCOMMENT_END "*/"
 {DECIMIAL} {
     if(dump_tokens)
         DEBUG_FOR_LAB4(yytext);
-    string result = yytext;
-    yylval.itype = stoi(result);
+    yylval.itype = atoi(yytext);
+    // string result = yytext;
+    // yylval.itype = stoi(result);
     return INTEGER;
 }
 {FLOATDECIMAL} {
@@ -269,15 +288,21 @@ BLOCKCOMMENT_END "*/"
 {OCTAL} {
     if(dump_tokens)
         DEBUG_FOR_LAB4(yytext);
-    string result = yytext;
-    yylval.itype = stoi(result, 0, 8);
+    int temp;
+    sscanf(yytext, "%o", &temp);
+    yylval.itype = temp;
+    // string result = yytext;
+    // yylval.itype = stoi(result, 0, 8);
     return INTEGER;
 }
 {HEXDECIMIAL} {
     if(dump_tokens)
         DEBUG_FOR_LAB4(yytext);
-    string result = yytext;
-    yylval.itype = stoi(result, 0, 16);
+    int temp;
+    sscanf(yytext, "%x", &temp);
+    yylval.itype = temp;
+    // string result = yytext;
+    // yylval.itype = stoi(result, 0, 16);
     return INTEGER;
 }
 {ID} {

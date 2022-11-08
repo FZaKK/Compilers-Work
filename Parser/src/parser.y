@@ -42,8 +42,8 @@
 %token MOD MUL DIV ADD SUB OR AND NON GREATER LESS GORE LORE ASSIGN
 %token WHILE RETURN BREAK CONTINUE
 
-%nterm <stmttype> ExprStmt BlankStmt ConstDef ConstDefList ConstDeclStmt Stmts Stmt AssignStmt BlockStmt IfStmt WhileStmt BreakStmt ContinueStmt ReturnStmt DeclStmt FuncDef VarDefList VarDef VarDeclStmt
-%nterm <exprtype> ConstInitVal ConstExp Exp AddExp Cond LOrExp PrimaryExp LVal RelExp EqExp UnaryExp LAndExp MulExp InitVal //各种形参域，数组
+%nterm <stmttype> ExprStmt BlankStmt ConstDef ConstDefList ConstDeclStmt Stmts Stmt AssignStmt BlockStmt IfStmt WhileStmt BreakStmt ContinueStmt ReturnStmt DeclStmt FuncDef VarDefList VarDef VarDeclStmt FuncFParams FuncFParam
+%nterm <exprtype> FuncRParam FuncRParams ConstInitVal ConstExp Exp AddExp Cond LOrExp PrimaryExp LVal RelExp EqExp UnaryExp LAndExp MulExp InitVal//各种形参域，数组
 %nterm <type> Type
 
 %precedence THEN
@@ -67,6 +67,7 @@ Stmt
     | IfStmt {$$=$1;}
     | BreakStmt {$$=$1;}
     | ContinueStmt {$$=$1;}
+    | WhileStmt {$$=$1;}
     | ReturnStmt {$$=$1;}
     | DeclStmt {$$ = $1;}
     | FuncDef {$$=$1;}
@@ -114,6 +115,9 @@ BlockStmt
             SymbolTable *top = identifiers;
             identifiers = identifiers->getPrev();
             delete top;
+        }
+    |   LBRACE RBRACE {
+            $$ = new CompoundStmt();
         }
     ;
 IfStmt
@@ -189,13 +193,13 @@ UnaryExp
         SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
         $$ = new UnaryExpr(se, UnaryExpr::NON, $2);
     }
-    | ID LPAREN RPAREN {
+    | ID LPAREN FuncRParams RPAREN {
         SymbolEntry *se;
         se = identifiers->lookup($1);
         if (se == nullptr)
             fprintf(stderr, "function \"%s\" is undefined\n", (char*)$1);
         else{
-            $$ = new CallExpr(se);
+            $$ = new CallExpr(se, $3);
         }
     } 
     ;
@@ -415,27 +419,74 @@ ConstExp
     :
     AddExp {$$ = $1;}
     ;
-FuncDef
+FuncDef  // 函数定义
     :
     Type ID {
-        Type *funcType;
-        funcType = new FunctionType($1,{}); // {}: param vector type
-        SymbolEntry *se = new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel());
-        identifiers->install($2, se);
-        identifiers = new SymbolTable(identifiers);
+        identifiers = new SymbolTable(identifiers);  // 申请新的符号表，此时为该函数的符号表
     }
-    LPAREN RPAREN
-    BlockStmt
-    {
-        SymbolEntry *se;
+    LPAREN FuncFParams RPAREN {
+        Type* funcType;
+        std::vector<SymbolEntry*> params;
+        DeclStmt* temp = (DeclStmt*)$5;  // 将所有形参全部装入params
+        while(temp){
+            params.push_back(temp->getId()->getSymbolEntry());
+            temp = (DeclStmt*)(temp->getNext());
+        }
+        funcType = new FunctionType($1, params);
+        SymbolEntry* se = new IdentifierSymbolEntry(funcType, $2, identifiers->getPrev()->getLevel());
+        identifiers->getPrev()->install($2, se);  // 将函数ID和函数类型装入符号表，这个是该函数上一级的符号表
+    }
+    BlockStmt {
+        SymbolEntry* se;
         se = identifiers->lookup($2);
         assert(se != nullptr);
-        $$ = new FunctionDef(se, $6);
-        SymbolTable *top = identifiers;
+        $$ = new FunctionDef(se, (DeclStmt*)$5, $8);
+        SymbolTable* top = identifiers;
         identifiers = identifiers->getPrev();
         delete top;
         delete []$2;
     }
+    ;
+FuncFParams  // 函数形参表
+    : 
+    FuncFParams COMMA FuncFParam {
+        $$ = $1;
+        $$->setNext($3);
+    }
+    | FuncFParam {
+        $$ = $1;
+    }
+    | %empty{  // 无参数的情况
+        $$ = nullptr;
+    }
+    ;
+FuncFParam  // 函数形参
+    : 
+    Type ID {
+        SymbolEntry* se;
+        // se = new IdentifierSymbolEntry($1, $2, identifiers->getLevel(), paramNo++);
+        se = new IdentifierSymbolEntry($1, $2, identifiers->getLevel());
+        identifiers->install($2, se);
+        // ((IdentifierSymbolEntry*)se)->setLabel();
+        // ((IdentifierSymbolEntry*)se)->setAddr(new Operand(se));
+        $$ = new DeclStmt(new Id(se));
+        delete []$2;
+    }
+    ;
+FuncRParams  // 函数实参表
+    :
+    FuncRParam {$$ = $1;}
+    | FuncRParams COMMA FuncRParam {
+        $$ = $1;
+        $$->setNext($3);
+    }
+    | %empty{
+        $$ = nullptr;
+    }
+    ;
+FuncRParam  // 函数实参
+    :
+    Exp {$$ = $1;}
     ;
 %%
 

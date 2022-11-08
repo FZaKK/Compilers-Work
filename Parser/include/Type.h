@@ -2,7 +2,9 @@
 #define __TYPE_H__
 #include <vector>
 #include <string>
+#include "SymbolTable.h"
 
+// 虚基类
 class Type
 {
 private:                 //private
@@ -53,11 +55,9 @@ class FunctionType : public Type
 {
 private:
     Type *returnType;
-    std::vector<Type*> paramsType;
-    // std::vector<SymbolEntry*> paramsSe;
+    std::vector<SymbolEntry*> params;  // 存储parameters的type和id
 public:
-    FunctionType(Type* returnType, std::vector<Type*> paramsType) : 
-    Type(Type::FUNC), returnType(returnType), paramsType(paramsType){}//this->paramsSe = paramsSe;};
+    FunctionType(Type* returnType, std::vector<SymbolEntry*> params) : Type(Type::FUNC), returnType(returnType), params(params){}
     std::string toStr();
 };
 
