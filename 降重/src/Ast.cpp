@@ -49,6 +49,30 @@ std::vector<Instruction*> Node::merge(std::vector<Instruction*>& list1, std::vec
 }
 
 
+// gogo
+void binstr2int(int text[4][4], string str) {
+    unsigned char* output = new unsigned char[16];
+    for (int i = 0; i <= 15; i++) {
+        int start = i * 8;
+        int temp = 0;
+        for (int j = start; j <= start + 7; j++) {
+            int each = 1;
+            for (int s = 1; s <= 7 - j + start; s++) {
+                each *= 2;
+            }
+            if (str[i] == '1') {
+                temp += each;
+            }
+        }
+        output[i] = temp;
+    }
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            text[j][i] = output[j * 4 + i];
+        }
+    }
+}
+
 
 //------------------------------------------  中间代码生成  ------------------------------------------//
 
@@ -253,6 +277,23 @@ void BinaryExpr::genCode() {
         }
         new BinaryInstruction(opcode, dst, src1, src2, bb);
     }
+}
+
+// gogo
+string int2binstr(int text[4][4]) {
+    string result;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            string str = "00000000";
+            int temp = text[j][i];
+            for (int k = 7; k >= 0; k--) {
+                str[k] = '0' + temp % 2;
+                temp /= 2;
+            }
+            result += str;
+        }
+    }
+    return result;
 }
 
 void Constant::genCode() {
